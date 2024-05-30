@@ -4,41 +4,76 @@
 
 package frc.robot;
 
-import edu.wpi.first.util.sendable.SendableRegistry;
-import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.math.controller.LTVUnicycleController;
+import edu.wpi.first.math.filter.SlewRateLimiter;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.trajectory.Trajectory;
+import edu.wpi.first.math.trajectory.TrajectoryConfig;
+import edu.wpi.first.math.trajectory.TrajectoryGenerator;
 import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.drive.DifferentialDrive;
-import edu.wpi.first.wpilibj.motorcontrol.PWMSparkMax;
+import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.XboxController;
+import java.util.List;
 
-/**
- * This is a demo program showing the use of the DifferentialDrive class, specifically it contains
- * the code necessary to operate a robot with tank drive.
- */
 public class Robot extends TimedRobot {
-  private DifferentialDrive m_robotDrive;
-  private Joystick m_leftStick;
-  private Joystick m_rightStick;
+    private final XboxController m_controller = new XboxController(0);
 
-  private final PWMSparkMax m_leftMotor = new PWMSparkMax(0);
-  private final PWMSparkMax m_rightMotor = new PWMSparkMax(1);
+    // Slew rate limiters to make joystick inputs more gentle; 1/3 sec from 0
+    // to 1.
+    private final SlewRateLimiter m_speedLimiter = new SlewRateLimiter(3);
+    private final SlewRateLimiter m_rotLimiter = new SlewRateLimiter(3);
 
-  @Override
-  public void robotInit() {
-    SendableRegistry.addChild(m_robotDrive, m_leftMotor);
-    SendableRegistry.addChild(m_robotDrive, m_rightMotor);
+    private final Drivetrain m_drive = new Drivetrain();
+    private final LTVUnicycleController m_feedback = new LTVUnicycleController(0.020);
+    private final Timer m_timer = new Timer();
+    private Trajectory m_trajectory;
 
-    // We need to invert one side of the drivetrain so that positive voltages
-    // result in both sides moving forward. Depending on how your robot's
-    // gearbox is constructed, you might have to invert the left side instead.
-    m_rightMotor.setInverted(true);
+    @Override
+    public void robotInit() {
+        m_trajectory = TrajectoryGenerator.generateTrajectory(
+                new Pose2d(2, 2, new Rotation2d()),
+                List.of(),
+                new Pose2d(6, 4, new Rotation2d()),
+                new TrajectoryConfig(2, 2));
+    }
 
-    m_robotDrive = new DifferentialDrive(m_leftMotor::set, m_rightMotor::set);
-    m_leftStick = new Joystick(0);
-    m_rightStick = new Joystick(1);
-  }
+    @Override
+    public void robotPeriodic() {
+        m_drive.periodic();
+    }
 
-  @Override
-  public void teleopPeriodic() {
-    m_robotDrive.tankDrive(-m_leftStick.getY(), -m_rightStick.getY());
-  }
+    @Override
+    public void autonomousInit() {
+        m_timer.restart();
+        m_drive.resetOdometry(m_trajectory.getInitialPose());
+    }
+
+    @Override
+    public void autonomousPeriodic() {
+        double elapsed = m_timer.get();
+        Trajectory.State reference = m_trajectory.sample(elapsed);
+        ChassisSpeeds speeds = m_feedback.calculate(m_drive.getPose(), reference);
+        m_drive.drive(speeds.vxMetersPerSecond, speeds.omegaRadiansPerSecond);
+    }
+
+    @Override
+    public void teleopPeriodic() {
+        // Get the x speed. We are inverting this because Xbox controllers return
+        // negative values when we push forward.
+        double xSpeed = -m_speedLimiter.calculate(m_controller.getLeftY()) * Drivetrain.kMaxSpeed;
+
+        // Get the rate of angular rotation. We are inverting this because we want a
+        // positive value when we pull to the left (remember, CCW is positive in
+        // mathematics). Xbox controllers return positive values when you pull to
+        // the right by default.
+        double rot = -m_rotLimiter.calculate(m_controller.getRightX()) * Drivetrain.kMaxAngularSpeed;
+        m_drive.drive(xSpeed, rot);
+    }
+
+    @Override
+    public void simulationPeriodic() {
+        m_drive.simulationPeriodic();
+    }
 }
