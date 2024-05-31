@@ -1,3 +1,8 @@
+/*
+ * <! ATTENTION JAVA COURSE STUDENTS! !>
+ * This is the drivetrain subsystem. For now, you shouldn't touch this file.
+ */
+
 // Copyright (c) FIRST and other WPILib contributors.
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
@@ -143,6 +148,8 @@ public class Drivetrain {
                 m_leftLeader.get() * RobotController.getInputVoltage(),
                 m_rightLeader.get() * RobotController.getInputVoltage());
         m_drivetrainSimulator.update(0.02);
+
+        // This part handles stopping the robot if it collides with something.
         if (!m_drivetrainSimulator.isOkToMove()) {
             m_drivetrainSimulator.setInputs(0, 0);
             originalState.set(3, 0, 0.0);

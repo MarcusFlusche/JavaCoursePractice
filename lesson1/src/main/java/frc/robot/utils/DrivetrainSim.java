@@ -1,3 +1,10 @@
+/*
+ * <! ATTENTION JAVA COURSE STUDENTS! !>
+ * This file is just a helper class for collisions in the simulator.
+ * 
+ * You shouldn't need to touch this file.
+ */
+
 package frc.robot.utils;
 
 import java.lang.reflect.Method;
