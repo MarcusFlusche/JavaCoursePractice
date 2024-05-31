@@ -11,14 +11,29 @@ import edu.wpi.first.math.numbers.N7;
 import edu.wpi.first.math.system.LinearSystem;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim;
+import me.nabdev.pathfinding.Pathfinder;
+import me.nabdev.pathfinding.PathfinderBuilder;
+import me.nabdev.pathfinding.structures.Edge;
+import me.nabdev.pathfinding.structures.Obstacle;
+import me.nabdev.pathfinding.structures.Vector;
+import me.nabdev.pathfinding.structures.Vertex;
+import me.nabdev.pathfinding.utilities.FieldLoader.Field;
 
 public class DrivetrainSim extends DifferentialDrivetrainSim {
+    public static final boolean boundsEnabled = false;
+    public static final boolean collisionEnabled = true;
+    public static final boolean correctCollisions = true;
+
     public static final double visualWidth = 0.686;
     public static final double visualLength = 0.82;
     public static final double halfWidth = visualWidth / 2.0;
     public static final double halfLength = visualLength / 2.0;
     public static final double fieldX = 16.542;
     public static final double fieldY = 8.211;
+
+    private Pathfinder pathfinder = new PathfinderBuilder(Field.CRESCENDO_2024).setRobotLength(0.001)
+            .setRobotWidth(0.001)
+            .build();
 
     Method getStateMethod;
 
@@ -64,13 +79,57 @@ public class DrivetrainSim extends DifferentialDrivetrainSim {
         return robot;
     }
 
-    public boolean isOutsideField() {
+    public boolean edgesIntersectWithObstacles() {
+        for (Obstacle obstacle : pathfinder.map.getObstacles()) {
+            for (Edge edge : obstacle.getEdges()) {
+                if (robotIntersectsWithEdge(edge.getVertexOne(obstacle.getMasterVertices()),
+                        edge.getVertexTwo(obstacle.getMasterVertices()))) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public boolean robotIntersectsWithEdge(Vertex a, Vertex b) {
         Translation2d[] robot = getRobotCorners();
-        for (Translation2d corner : robot) {
-            if (corner.getX() < 0 || corner.getX() > fieldX || corner.getY() < 0 || corner.getY() > fieldY) {
+        for (int i = 0; i < 4; i++) {
+            Translation2d corner = robot[i];
+            Translation2d nextCorner = robot[(i + 1) % 4];
+            if (Vector.dotIntersectFast(a, b, new Vertex(corner), new Vertex(nextCorner))) {
                 return true;
             }
         }
         return false;
     }
+
+    public boolean isOutsideField() {
+        Translation2d[] robot = getRobotCorners();
+        for (Translation2d corner : robot) {
+            if (corner.getX() < 0 || corner.getX() > fieldX || corner.getY() < 0 || corner.getY() > fieldY
+                    || Obstacle.isRobotInObstacle(pathfinder.map.getObstacles(), new Vertex(corner)).size() > 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean isOkToMove() {
+        Translation2d[] robot = getRobotCorners();
+        for (Translation2d corner : robot) {
+            if (boundsEnabled
+                    && (corner.getX() < 0 || corner.getX() > fieldX || corner.getY() < 0 || corner.getY() > fieldY)) {
+                return false;
+            }
+            if ((collisionEnabled && Obstacle
+                    .isRobotInObstacle(pathfinder.map.getObstacles(), new Vertex(corner)).size() > 0)) {
+                return false;
+            }
+            if (correctCollisions && edgesIntersectWithObstacles()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
 }

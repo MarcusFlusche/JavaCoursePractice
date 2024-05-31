@@ -29,7 +29,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.utils.DrivetrainSim;
 
 public class Drivetrain {
-    public static final boolean boundsEnabled = true;
     // 3 meters per second.
     public static final double kMaxSpeed = 3.0;
     // 1/2 rotation per second.
@@ -144,7 +143,7 @@ public class Drivetrain {
                 m_leftLeader.get() * RobotController.getInputVoltage(),
                 m_rightLeader.get() * RobotController.getInputVoltage());
         m_drivetrainSimulator.update(0.02);
-        if (boundsEnabled && m_drivetrainSimulator.isOutsideField()) {
+        if (!m_drivetrainSimulator.isOkToMove()) {
             m_drivetrainSimulator.setInputs(0, 0);
             originalState.set(3, 0, 0.0);
             originalState.set(4, 0, 0.0);

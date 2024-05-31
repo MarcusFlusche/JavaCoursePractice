@@ -34,7 +34,7 @@ public class Robot extends TimedRobot {
 
     @Override
     public void robotInit() {
-        m_drive.resetOdometry(new Pose2d(DrivetrainSim.visualLength, DrivetrainSim.visualWidth, new Rotation2d()));
+        m_drive.resetOdometry(new Pose2d(3, 3, new Rotation2d()));
         m_trajectory = TrajectoryGenerator.generateTrajectory(
                 new Pose2d(2, 2, new Rotation2d()),
                 List.of(),
