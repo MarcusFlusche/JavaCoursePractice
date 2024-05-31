@@ -81,7 +81,7 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.1'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
-    implementation 'me.nabdev.pathfinding:oxplorer:0.12.3'
+    implementation 'me.nabdev.pathfinding:oxplorer:0.12.4'
 }
 
 test {

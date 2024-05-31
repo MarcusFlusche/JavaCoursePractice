@@ -1,6 +1,7 @@
 package frc.robot.utils;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -20,9 +21,13 @@ import me.nabdev.pathfinding.structures.Vertex;
 import me.nabdev.pathfinding.utilities.FieldLoader.Field;
 
 public class DrivetrainSim extends DifferentialDrivetrainSim {
-    public static final boolean boundsEnabled = false;
-    public static final boolean collisionEnabled = true;
-    public static final boolean correctCollisions = true;
+    public enum CollisionMode {
+        BOUNDARIES,
+        COLLISIONS,
+        CORRECT_COLLISIONS,
+    }
+
+    public static CollisionMode collisionMode = CollisionMode.CORRECT_COLLISIONS;
 
     public static final double visualWidth = 0.686;
     public static final double visualLength = 0.82;
@@ -80,12 +85,10 @@ public class DrivetrainSim extends DifferentialDrivetrainSim {
     }
 
     public boolean edgesIntersectWithObstacles() {
-        for (Obstacle obstacle : pathfinder.map.getObstacles()) {
-            for (Edge edge : obstacle.getEdges()) {
-                if (robotIntersectsWithEdge(edge.getVertexOne(obstacle.getMasterVertices()),
-                        edge.getVertexTwo(obstacle.getMasterVertices()))) {
-                    return true;
-                }
+        ArrayList<Vertex> vertices = pathfinder.map.getPathVerticesStatic();
+        for (Edge edge : pathfinder.map.getValidObstacleEdges()) {
+            if (robotIntersectsWithEdge(edge.getVertexOne(vertices), edge.getVertexTwo(vertices))) {
+                return true;
             }
         }
         return false;
@@ -117,15 +120,15 @@ public class DrivetrainSim extends DifferentialDrivetrainSim {
     public boolean isOkToMove() {
         Translation2d[] robot = getRobotCorners();
         for (Translation2d corner : robot) {
-            if (boundsEnabled
+            if (collisionMode == CollisionMode.BOUNDARIES
                     && (corner.getX() < 0 || corner.getX() > fieldX || corner.getY() < 0 || corner.getY() > fieldY)) {
                 return false;
             }
-            if ((collisionEnabled && Obstacle
+            if ((collisionMode == CollisionMode.COLLISIONS && Obstacle
                     .isRobotInObstacle(pathfinder.map.getObstacles(), new Vertex(corner)).size() > 0)) {
                 return false;
             }
-            if (correctCollisions && edgesIntersectWithObstacles()) {
+            if (collisionMode == CollisionMode.CORRECT_COLLISIONS && edgesIntersectWithObstacles()) {
                 return false;
             }
         }
