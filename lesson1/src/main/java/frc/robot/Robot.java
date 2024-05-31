@@ -15,6 +15,8 @@ import edu.wpi.first.math.trajectory.TrajectoryGenerator;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
+import frc.robot.utils.DrivetrainSim;
+
 import java.util.List;
 
 public class Robot extends TimedRobot {
@@ -32,6 +34,7 @@ public class Robot extends TimedRobot {
 
     @Override
     public void robotInit() {
+        m_drive.resetOdometry(new Pose2d(DrivetrainSim.visualLength, DrivetrainSim.visualWidth, new Rotation2d()));
         m_trajectory = TrajectoryGenerator.generateTrajectory(
                 new Pose2d(2, 2, new Rotation2d()),
                 List.of(),

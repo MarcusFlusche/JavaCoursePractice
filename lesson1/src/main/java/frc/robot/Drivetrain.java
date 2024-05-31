@@ -4,6 +4,7 @@
 
 package frc.robot;
 
+import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -11,7 +12,9 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
 import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
+import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N2;
+import edu.wpi.first.math.numbers.N7;
 import edu.wpi.first.math.system.LinearSystem;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
@@ -20,12 +23,13 @@ import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.motorcontrol.PWMSparkMax;
 import edu.wpi.first.wpilibj.simulation.AnalogGyroSim;
-import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim;
 import edu.wpi.first.wpilibj.simulation.EncoderSim;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import frc.robot.utils.DrivetrainSim;
 
 public class Drivetrain {
+    public static final boolean boundsEnabled = true;
     // 3 meters per second.
     public static final double kMaxSpeed = 3.0;
     // 1/2 rotation per second.
@@ -63,7 +67,7 @@ public class Drivetrain {
     private final Field2d m_fieldSim = new Field2d();
     private final LinearSystem<N2, N2, N2> m_drivetrainSystem = LinearSystemId.identifyDrivetrainSystem(1.98, 0.2, 1.5,
             0.3);
-    private final DifferentialDrivetrainSim m_drivetrainSimulator = new DifferentialDrivetrainSim(
+    private final DrivetrainSim m_drivetrainSimulator = new DrivetrainSim(
             m_drivetrainSystem, DCMotor.getCIM(2), 8, kTrackWidth, kWheelRadius, null);
 
     /** Subsystem constructor. */
@@ -113,7 +117,8 @@ public class Drivetrain {
     /** Update robot odometry. */
     public void updateOdometry() {
         m_odometry.update(
-                m_gyro.getRotation2d(), m_leftEncoder.getDistance(), m_rightEncoder.getDistance());
+                m_gyro.getRotation2d(), m_leftEncoder.getDistance(),
+                m_rightEncoder.getDistance());
     }
 
     /** Resets robot odometry. */
@@ -134,10 +139,18 @@ public class Drivetrain {
         // simulation, and write the simulated positions and velocities to our
         // simulated encoder and gyro. We negate the right side so that positive
         // voltages make the right side move forward.
+        Matrix<N7, N1> originalState = m_drivetrainSimulator.getCurrentState();
         m_drivetrainSimulator.setInputs(
                 m_leftLeader.get() * RobotController.getInputVoltage(),
                 m_rightLeader.get() * RobotController.getInputVoltage());
         m_drivetrainSimulator.update(0.02);
+        if (boundsEnabled && m_drivetrainSimulator.isOutsideField()) {
+            m_drivetrainSimulator.setInputs(0, 0);
+            originalState.set(3, 0, 0.0);
+            originalState.set(4, 0, 0.0);
+            m_drivetrainSimulator.setState(originalState);
+            m_drivetrainSimulator.update(0.02);
+        }
 
         m_leftEncoderSim.setDistance(m_drivetrainSimulator.getLeftPositionMeters());
         m_leftEncoderSim.setRate(m_drivetrainSimulator.getLeftVelocityMetersPerSecond());
@@ -151,4 +164,4 @@ public class Drivetrain {
         updateOdometry();
         m_fieldSim.setRobotPose(m_odometry.getPoseMeters());
     }
-}
+};
