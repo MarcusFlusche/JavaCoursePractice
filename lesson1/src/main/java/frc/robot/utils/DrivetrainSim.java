@@ -36,8 +36,8 @@ public class DrivetrainSim extends DifferentialDrivetrainSim {
 
     public static CollisionMode collisionMode = CollisionMode.CORRECT_COLLISIONS;
 
-    public static final double visualWidth = 0.686;
-    public static final double visualLength = 0.82;
+    public static final double visualWidth = 0.88;
+    public static final double visualLength = 0.88;
     public static final double halfWidth = visualWidth / 2.0;
     public static final double halfLength = visualLength / 2.0;
     public static final double fieldX = 16.542;
