@@ -23,11 +23,11 @@
   "MainWindow": {
     "GLOBAL": {
       "fps": "120",
-      "height": "705",
+      "height": "961",
       "maximized": "1",
       "style": "0",
       "userScale": "2",
-      "width": "1366",
+      "width": "1280",
       "xpos": "0",
       "ypos": "23"
     }

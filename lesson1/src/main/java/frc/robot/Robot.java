@@ -76,6 +76,7 @@ public class Robot extends TimedRobot {
          * If the robot keeps crashing into things, think about the adjustments you need
          * to make to change the size of the circle.
          */
+        m_drive.drive(5,10);
     }
 
     /**
@@ -103,5 +104,6 @@ public class Robot extends TimedRobot {
      */
     @Override
     public void simulationPeriodic() {
+        m_drive.simulationPeriodic();
     }
 }
