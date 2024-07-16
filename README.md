@@ -10,6 +10,7 @@ If you haven't already, you should create a fork.
 
 1. Click on "Fork" in the top right corner
 2. Click "Create Fork" in the bottom right
+3. Success!
 
 **IMPORTANT - Enable issues!**
 
