@@ -11,6 +11,7 @@
 package frc.robot;
 
 // These are the imports used in this file. They allow us to use classes from other files.
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -85,13 +86,16 @@ public class Robot extends TimedRobot {
     public void teleopPeriodic() {
         // Get the x speed. We are inverting this because Xbox controllers return
         // negative values when we push forward.
-        double xSpeed = -m_speedLimiter.calculate(m_controller.getLeftY()) * Drivetrain.kMaxSpeed;
+        // The deadband is used to prevent stick drift.
+        double joystickLeftY = MathUtil.applyDeadband(m_controller.getLeftY(), 0.05);
+        double xSpeed = -m_speedLimiter.calculate(joystickLeftY) * Drivetrain.kMaxSpeed;
 
         // Get the rate of angular rotation. We are inverting this because we want a
         // positive value when we pull to the left (remember, counterclockwise is
         // positive in mathematics). Xbox controllers return positive values when you
         // pull to the right by default.
-        double rot = -m_rotLimiter.calculate(m_controller.getRightX()) * Drivetrain.kMaxAngularSpeed;
+        double joystickRightX = MathUtil.applyDeadband(m_controller.getRightX(), 0.05);
+        double rot = -m_rotLimiter.calculate(joystickRightX) * Drivetrain.kMaxAngularSpeed;
 
         // Provide the speeds to the drive subsystem.
         m_drive.drive(xSpeed, rot);
