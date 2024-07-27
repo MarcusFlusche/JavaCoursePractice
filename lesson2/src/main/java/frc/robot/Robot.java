@@ -39,7 +39,7 @@ public class Robot extends TimedRobot {
     @Override
     public void robotInit() {
         // Controlls the initial pose for the robot
-        m_drive.resetOdometry(new Pose2d(2, 2, new Rotation2d()));
+        m_drive.resetOdometry(new Pose2d(2, 1.5, new Rotation2d()));
     }
 
     /**
@@ -57,6 +57,7 @@ public class Robot extends TimedRobot {
      */
     @Override
     public void autonomousInit() {
+
     }
 
     /**
